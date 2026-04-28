@@ -65,7 +65,6 @@
             padding: 2rem;
             width: 100%;
             max-width: 500px;
-            margin-bottom: 2rem;
         }
 
         .password-display {
@@ -73,13 +72,13 @@
             background-color: rgba(67, 97, 238, 0.1);
             border: 2px solid var(--primary);
             border-radius: 8px;
-            padding: 1rem;
+            padding: 1.2rem;
             margin-bottom: 1.5rem;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 600;
             word-break: break-all;
             text-align: center;
-            min-height: 70px;
+            min-height: 75px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -222,38 +221,6 @@
             border-color: var(--success);
         }
 
-        .history {
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .history h2 {
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .history-list {
-            list-style: none;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            background-color: var(--card-bg);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px var(--shadow);
-        }
-
-        .history-item button {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.8rem;
-        }
-
         .theme-toggle {
             position: absolute;
             top: 1rem;
@@ -333,22 +300,13 @@
         </div>
 
         <div class="buttons">
-            <button class="btn-generate" id="generateBtn">
-                <span>Générer</span>
-            </button>
-            <button class="btn-copy" id="copyBtn">
-                <span>Copier</span>
-            </button>
+            <button class="btn-generate" id="generateBtn">Générer</button>
+            <button class="btn-copy" id="copyBtn">Copier</button>
         </div>
     </div>
 
-    <div class="history">
-        <h2>Historique</h2>
-        <ul class="history-list" id="historyList"></ul>
-    </div>
-
     <footer>
-        <p>Générateur de mot de passe sécurisé - © 2025</p>
+        <p>Générateur de mot de passe sécurisé - © 2026</p>
     </footer>
 
     <script>
@@ -365,7 +323,6 @@
             const copyBtn = document.getElementById('copyBtn');
             const passwordDisplay = document.getElementById('passwordDisplay');
             const strengthFill = document.getElementById('strengthFill');
-            const historyList = document.getElementById('historyList');
 
             // Caractères possibles
             const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -373,19 +330,13 @@
             const numbers = '0123456789';
             const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
-            // Historique des mots de passe
-            let passwordHistory = JSON.parse(localStorage.getItem('passwordHistory')) || [];
-
-            // Charger l'historique
-            updateHistoryDisplay();
-
             // Thème sombre/clair
             themeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-mode');
                 themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
             });
 
-            // Mise à jour de l'affichage de la longueur
+            // Mise à jour de la valeur de la longueur
             lengthSlider.addEventListener('input', () => {
                 lengthValue.textContent = lengthSlider.value;
             });
@@ -401,77 +352,60 @@
                 let charset = '';
                 let password = '';
 
-                // Construction du jeu de caractères en fonction des options
+                // Construction du jeu de caractères
                 if (uppercaseCheckbox.checked) charset += uppercase;
                 if (lowercaseCheckbox.checked) charset += lowercase;
                 if (numbersCheckbox.checked) charset += numbers;
                 if (symbolsCheckbox.checked) charset += symbols;
 
-                // Vérification qu'au moins une option est sélectionnée
                 if (charset.length === 0) {
                     alert('Veuillez sélectionner au moins un type de caractères.');
                     return;
                 }
 
-                // Génération du mot de passe
                 const length = parseInt(lengthSlider.value);
+
                 for (let i = 0; i < length; i++) {
                     const randomIndex = Math.floor(Math.random() * charset.length);
                     password += charset[randomIndex];
                 }
 
-                // Affichage du mot de passe
+                // Affichage
                 passwordDisplay.textContent = password;
                 passwordDisplay.classList.remove('empty');
 
                 // Animation
                 passwordDisplay.classList.add('generating');
-                setTimeout(() => {
-                    passwordDisplay.classList.remove('generating');
-                }, 300);
+                setTimeout(() => passwordDisplay.classList.remove('generating'), 300);
 
-                // Calcul et affichage de la force
+                // Force du mot de passe
                 updatePasswordStrength(password);
-
-                // Ajout à l'historique
-                addToHistory(password);
             }
 
             // Calcul de la force du mot de passe
             function updatePasswordStrength(password) {
                 let strength = 0;
 
-                // Longueur
                 if (password.length >= 8) strength += 1;
                 if (password.length >= 12) strength += 1;
 
-                // Diversité des caractères
-                const hasUpper = /[A-Z]/.test(password);
-                const hasLower = /[a-z]/.test(password);
-                const hasNumber = /[0-9]/.test(password);
-                const hasSymbol = /[^A-Za-z0-9]/.test(password);
+                if (/[A-Z]/.test(password)) strength += 1;
+                if (/[a-z]/.test(password)) strength += 1;
+                if (/[0-9]/.test(password)) strength += 1;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 2;
 
-                if (hasUpper) strength += 1;
-                if (hasLower) strength += 1;
-                if (hasNumber) strength += 1;
-                if (hasSymbol) strength += 2; // Les symboles ajoutent plus de sécurité
+                const strengthPercent = (strength / 7) * 100;
 
-                // Normalisation entre 0 et 100%
-                const maxStrength = 7; // 2 (longueur) + 1+1+1+2 (diversité) = 7
-                const strengthPercent = (strength / maxStrength) * 100;
-
-                // Mise à jour de la barre de force
                 strengthFill.style.width = `${strengthPercent}%`;
 
-                // Couleur en fonction de la force
                 if (strengthPercent < 25) {
-                    strengthFill.style.backgroundColor = '#dc3545'; // Rouge
+                    strengthFill.style.backgroundColor = '#dc3545';
                 } else if (strengthPercent < 50) {
-                    strengthFill.style.backgroundColor = '#fd7e14'; // Orange
+                    strengthFill.style.backgroundColor = '#fd7e14';
                 } else if (strengthPercent < 75) {
-                    strengthFill.style.backgroundColor = '#ffc107'; // Jaune
+                    strengthFill.style.backgroundColor = '#ffc107';
                 } else {
-                    strengthFill.style.backgroundColor = '#198754'; // Vert
+                    strengthFill.style.backgroundColor = '#198754';
                 }
             }
 
@@ -480,82 +414,22 @@
                 if (passwordDisplay.classList.contains('empty')) return;
 
                 const password = passwordDisplay.textContent;
+
                 navigator.clipboard.writeText(password).then(() => {
-                    // Feedback visuel
                     copyBtn.classList.add('copied');
-                    copyBtn.innerHTML = '<span>Copié!</span>';
+                    copyBtn.textContent = 'Copié !';
 
                     setTimeout(() => {
                         copyBtn.classList.remove('copied');
-                        copyBtn.innerHTML = '<span>Copier</span>';
+                        copyBtn.textContent = 'Copier';
                     }, 2000);
                 }).catch(err => {
-                    console.error('Erreur lors de la copie: ', err);
+                    console.error('Erreur de copie:', err);
                     alert('Impossible de copier le mot de passe');
                 });
             }
 
-            // Ajout à l'historique
-            function addToHistory(password) {
-                // Ajouter au début du tableau
-                passwordHistory.unshift({
-                    password: password,
-                    timestamp: new Date().toLocaleString('fr-FR')
-                });
-
-                // Garder seulement les 5 derniers
-                if (passwordHistory.length > 5) {
-                    passwordHistory.pop();
-                }
-
-                // Sauvegarder dans le localStorage
-                localStorage.setItem('passwordHistory', JSON.stringify(passwordHistory));
-
-                // Mettre à jour l'affichage
-                updateHistoryDisplay();
-            }
-
-            // Mise à jour de l'affichage de l'historique
-            function updateHistoryDisplay() {
-                historyList.innerHTML = '';
-
-                if (passwordHistory.length === 0) {
-                    historyList.innerHTML = '<li class="history-item">Aucun mot de passe généré récemment</li>';
-                    return;
-                }
-
-                passwordHistory.forEach(item => {
-                    const li = document.createElement('li');
-                    li.className = 'history-item';
-
-                    const passwordSpan = document.createElement('span');
-                    passwordSpan.textContent = item.password;
-
-                    const timeSpan = document.createElement('span');
-                    timeSpan.textContent = item.timestamp;
-                    timeSpan.style.fontSize = '0.8rem';
-                    timeSpan.style.color = 'var(--gray)';
-
-                    const button = document.createElement('button');
-                    button.className = 'btn-copy';
-                    button.innerHTML = 'Copier';
-                    button.addEventListener('click', () => {
-                        navigator.clipboard.writeText(item.password);
-                        button.innerHTML = 'Copié!';
-                        setTimeout(() => {
-                            button.innerHTML = 'Copier';
-                        }, 2000);
-                    });
-
-                    li.appendChild(passwordSpan);
-                    li.appendChild(timeSpan);
-                    li.appendChild(button);
-
-                    historyList.appendChild(li);
-                });
-            }
-
-            // Générer un mot de passe au chargement de la page
+            // Générer un mot de passe au chargement
             generatePassword();
         });
     </script>
